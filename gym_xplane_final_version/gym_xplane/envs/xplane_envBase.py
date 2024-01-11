@@ -6,7 +6,7 @@ import gym_xplane.parameters as parameters
 import gym_xplane.space_definition as envSpaces
 import numpy as np
 import itertools
-from time import sleep, clock
+from time import sleep, process_time
 
 class initial:
 
@@ -111,14 +111,14 @@ class XplaneEnv(gym.Env):
             #############################################
             
             #############################################
-            i=clock() # get the time up till now
+            i=process_time() # get the time up till now
             XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
             XplaneEnv.CLIENT.sendCTRL(actions) # send action
             sleep(0.0003)  # sleep for a while so that action is executed
             self.actions = actions  # set the previous action to current action. 
                                     # This will be compared to action on control in next iteraion
             XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
-            j=clock() # get the time now, i-j is the time at which the simulation is unpaused and action exeuted
+            j=process_time() # get the time now, i-j is the time at which the simulation is unpaused and action exeuted
             # fom this point the simulation is paused so that we compute reward and state-action value
             ################################################# 
             
@@ -258,7 +258,7 @@ class XplaneEnv(gym.Env):
             else:
                 state14 = [i for i in self.ControlParameters.state14.values()]
         #print(reward, 'reward' , self.ControlParameters.totalReward, self.ControlParameters.episodeReward )
-        q=clock() # end of loop timer 
+        q=process_time() # end of loop timer 
         #print("pause estimate", q-j)
         return  np.array(state14),reward,self.ControlParameters.flag,self._get_info() #self.ControlParameters.state14
 
