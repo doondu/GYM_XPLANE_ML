@@ -3,7 +3,7 @@ import argparse
 import gym_xplane
 #import p3xpc 
 import gym
-
+import datetime
 
 
 class RandomAgent(object):
@@ -37,8 +37,10 @@ if __name__ == '__main__':
 
     #env.seed(123)
     agent = RandomAgent(env.action_space)
+    
 
     episodes = 0
+
     while episodes < 50:
         obs = env.reset()
         done = False
@@ -47,6 +49,7 @@ if __name__ == '__main__':
             obs, reward, done, _ = env.step(action) 
 
             print(obs, reward, done)
+            # print(string)
             #print(done)
         episodes += 1
 

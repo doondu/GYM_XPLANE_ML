@@ -39,14 +39,14 @@ if __name__ == '__main__':
     agent = RandomAgent(env.action_space)
 
     episodes = 0
-    while episodes < 1:
+    while episodes < 50:
         obs = env.reset()
         done = False
         while not done:
             action = agent.act()
             obs, reward, done, _ = env.step(action) 
-
             print(obs, reward, done)
+
             #print(done)
         episodes += 1
 

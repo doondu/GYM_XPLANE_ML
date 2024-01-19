@@ -6,7 +6,10 @@ import gym_xplane.parameters as parameters
 import gym_xplane.space_definition as envSpaces
 import numpy as np
 import itertools
-from time import sleep, process_time
+from time import sleep, process_time, perf_counter, thread_time, time
+import csv
+import threading
+from datetime import datetime
 
 class initial:
 
@@ -15,10 +18,6 @@ class initial:
 
 class XplaneEnv(gym.Env):
 
-    
-    
-
-    
 
     def __init__(self,clientAddr, xpHost, xpPort  , clientPort, timeout=3000 ,max_episode_steps=303,test=False):
         #CLIENT = client
@@ -41,12 +40,24 @@ class XplaneEnv(gym.Env):
         except:
             print("connection error. Check your paramters")
         print('I am client', XplaneEnv.CLIENT )
-        
+
+        ###################################FILE
+        self.logEn = None
+        logName1 = "Log_env"
+        try:
+            log_en =open(logName1, 'w', newline='')
+            self.logEn = csv.writer(log_en)
+        except:
+            print("################FAILED FILE OPEN################")
+        ##################################
+            
          
     
 
     def close(self):
         XplaneEnv.CLIENT.close()
+        logEn.close()
+        print("#######################################ENV CLOSE#######################################")
     
     def rewardCalcul(self,target_state,xplane_state,sigma=0.45):
         '''
@@ -64,13 +75,17 @@ class XplaneEnv(gym.Env):
        
         pairwise_dists = pdist(data,'cosine')
         #print('pairwise distance',pairwise_dists)
+        #두 상태 간의 가우시안 커널 유사도 (target state, xplane_state)
         similarity = np.exp(-pairwise_dists ** 2 / sigma ** 2)
 
         return pairwise_dists
 
 
     def step(self, actions):
-     
+        ###############################[YS]check
+        aPt_1 = process_time()
+        aPc_1 = perf_counter()  
+        ###############################[YS]check
 
         self.test=False # if true, only test paramters returned. for Model tesing 
         self.ControlParameters.flag = False # for synchronisation of training
@@ -84,6 +99,11 @@ class XplaneEnv(gym.Env):
         j=0  # getting simulaion timing measurement
         
         try:
+
+            ###############################[YS]check
+            bPt_1 = process_time()
+            bPc_1 = perf_counter()
+            ###############################[YS]check
             
             #############################################
 
@@ -105,23 +125,47 @@ class XplaneEnv(gym.Env):
             # chck pevious action is same as the one on the controls
             print("prevous action",self.actions) # prvious ation
             print("action on ctrl ...",XplaneEnv.CLIENT.getCTRL()) # action on control surface
-            # if this is not sae then there are unaccounted forcs that could affct ainin
+            # if this is not same then there are unaccounted forcs that could affct ainin
             # cnage the sleep time ater actio is sent in odr to ensure that training is synchronise
             # an the actins prined hee are same
             #############################################
             
+            ###############################[YS]check
+            bPt_2 = process_time()
+            bPc_2 = perf_counter()
+            ###############################[YS]check
+
             #############################################
+            #시뮬레이션을 일시 중지하고 동작을 보내고, 잠시 대기한 후 동작이 실행되도록 하고, 이후에 시뮬레이션을 다시 일시 중지하여 보상 및 상태-동작 값을 계산
             i=process_time() # get the time up till now
-            XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
+
+            #################[YS] LOGFILE
+            # rfStart = perf_counter()
+            #################[YS] LOGFILE
+
+            #XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
             XplaneEnv.CLIENT.sendCTRL(actions) # send action
             sleep(0.0003)  # sleep for a while so that action is executed
             self.actions = actions  # set the previous action to current action. 
                                     # This will be compared to action on control in next iteraion
-            XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
+            #XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
             j=process_time() # get the time now, i-j is the time at which the simulation is unpaused and action exeuted
+
+            #################[YS] LOGFILE
+            # string1 = str(format((i - j), '.6f')) #"processTim
+            # string2 = str(format((perf_counter() - rfStart), '.6f')) #"perfCounter:
+            # string3 = str(threading.active_count()) #"threadCount
+            # self.logS.writerow([string1, string2, string3])
+            #################[YS] LOGFILE
+
             # fom this point the simulation is paused so that we compute reward and state-action value
             ################################################# 
             
+            ###############################[YS]check
+            bPt_3 = process_time()
+            bPc_3 = perf_counter()
+            ###############################[YS]check
+
             #################################################
             # tenporary variable for holding stae values
             state = [];
@@ -129,6 +173,7 @@ class XplaneEnv(gym.Env):
             ################################################
             
             #################################################
+            # 여기가 state get 값 모음1, 자세한 건 parameters.py
             # get the state variabls here . The parameter file has all the required variables
             # we only need to call the client interface and get parameters defined as stateVariable
             # in parameter file as below
@@ -140,28 +185,54 @@ class XplaneEnv(gym.Env):
             # combine the position and other state parameters in temporary variable here
             state =  self.ControlParameters.stateAircraftPosition + self.ControlParameters.stateVariableValue
             ########################################################
+            
+            ###############################[YS]check
+            bPt_4 = process_time()
+            bPc_4 = perf_counter()
+            ###############################[YS]check
 
             ########################################################
             # **********************************************reward parametera**********************
             # rewardVector : distance to the target . This is distance along the heading and altitude.
             # this is set to motivate he agent to mov forad in time . Accumulate disance
+            # 여기가 state get 값 모음2
             rewardVector = XplaneEnv.CLIENT.getDREF(self.ControlParameters.rewardVariable)[0][0] 
             headingReward = 164 # the heading target
             minimumAltitude= 12000 # Targrt Altitude
             minimumRuntime = 210.50 # Target runtime
             # ****************************************************************************************
+            
+            ###############################[YS]check
+            bPt_5 = process_time()
+            bPc_5 = perf_counter()
+            ###############################[YS]check
 
             # *******************************other training parameters ******************
             # consult https://www.siminnovations.com/xplane/dataref/index.php for full list of possible parameters
+            # 여기가 state get 값 모음3
             P = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/P")[0][0] # moment P
             Q = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/Q")[0][0] # moment Q
             R = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/R")[0][0]  # moment R
             hstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/hstab1_elv2def")[0][0] # horizontal stability : not use for now
             vstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/vstab2_rud1def")[0][0] # vertical stability : not used for now
+
+            ###############################[YS]check
+            bPt_6 = process_time()
+            bPc_6 = perf_counter()
+            ###############################[YS]check
+
+            #################[YS] LOGFILE
+            # string4 = str(P) #roll
+            # string5 = str(Q) #pitch
+            # string6 = str(R) #yaw
+            # self.logEn.writerow([str(rfStart), string1, string2, string3, string4, string5, string6]) #processtime, perftime, threadcount, roll, pitch, yaw
+            #################[YS] LOGFILE
+
             # ******************************************************************************
             ################################################################################
 
             ##############################################################################
+            # 여기다 get 한거 모두 포함
             # check that all parameters have been collected. This is done by checking the legth of list
             # It is possible because of network failure that all parameters are not retrieved on UDP
             # In that case previous state / last full state will be used. check the except of this try.
@@ -190,6 +261,11 @@ class XplaneEnv(gym.Env):
                     state14 = [i for i in self.ControlParameters.state14.values()]
             ######################################################################
             
+            ###############################[YS]check
+            bPt_7 = process_time()
+            bPc_7 = perf_counter()
+            ###############################[YS]check
+
             ###########################################################################
             # *******************************reward computation ******************
             # parameters required for reward
@@ -207,11 +283,18 @@ class XplaneEnv(gym.Env):
             self.ControlParameters.episodeStep += 1
             #############################################################################
 
-            ###########################################################################
+            ###############################[YS]check
+            bPt_8 = process_time()
+            bPc_8 = perf_counter()
+            ###############################[YS]check
+
+            #################  ##########################################################
             # end of episode setting
             # detect crash and penalize the agênt
             # if crash add -3 otherwose reward ramin same
             if XplaneEnv.CLIENT.getDREFs(self.ControlParameters.on_ground)[0][0] >= 1 or XplaneEnv.CLIENT.getDREFs( self.ControlParameters.crash)[0][0] <=0:
+                #만약에 비행기 조종하지 않고 실행 시 episode가 증가 되며 이 부분을 거침
+                print("##############################GROUNDGORUNDCRASHCRASHWILLGOONNEXTEPISODE")
                 self.ControlParameters.flag = True # end of episode flag
                 self.ControlParameters.reset = False # this checks that duplicate penalizaion is not aplied especiall when sim 
                                                      # frequency is high
@@ -228,6 +311,7 @@ class XplaneEnv(gym.Env):
             # set flag to true if maximum steps has been achieved. Thus episode is finished.
             # set the maximum episode step to the value you want    
             elif self.ControlParameters.episodeStep > self.max_episode_steps:
+                print("###############################MAX EXPISODE STEPS, After your riding done")
                 self.ControlParameters.flag = True
                 self.ControlParameters.totalReward  = self.ControlParameters.episodeReward
             ###########################################################################
@@ -246,9 +330,13 @@ class XplaneEnv(gym.Env):
             else:
                 reward = self.ControlParameters.episodeReward
             ###########################################################################
-            
+            ###############################[YS]check
+            bPt_9 = process_time()
+            bPc_9 = perf_counter()
+            ###############################[YS]check
 
-        except:
+        except Exception as e:
+            print(f"#####################################EXCEPT, CRASH OR GROUND")
             reward = self.ControlParameters.episodeReward
             self.ControlParameters.flag = False
             self.ControlParameters.state14 =  self.ControlParameters.state14
@@ -258,8 +346,36 @@ class XplaneEnv(gym.Env):
             else:
                 state14 = [i for i in self.ControlParameters.state14.values()]
         #print(reward, 'reward' , self.ControlParameters.totalReward, self.ControlParameters.episodeReward )
-        q=process_time() # end of loop timer 
+        q = process_time() # end of loop timer 
         #print("pause estimate", q-j)
+        ###############################[YS]check
+        aPt_2 = process_time()
+        aPc_2 = perf_counter()
+
+        
+        totalPt = str(format((aPt_2 - aPt_1), '.6f'))
+        totalPc = str(format((aPc_2 - aPc_1), '.6f'))
+        blockPt1 = str(format((bPt_2 - bPt_1), '.6f')) #getCTRL
+        blockPc1 = str(format((bPc_2 - bPc_1), '.6f'))
+        blockPt2 = str(format((bPt_3 - bPt_2), '.6f')) #getCTRL
+        blockPc2 = str(format((bPc_3 - bPc_2), '.6f'))
+        blockPt3 = str(format((bPt_4 - bPt_3), '.6f')) #getCTRL
+        blockPc3 = str(format((bPc_4 - bPc_3), '.6f'))
+        blockPt4 = str(format((bPt_5 - bPt_4), '.6f')) #getCTRL
+        blockPc4 = str(format((bPc_5 - bPc_4), '.6f'))
+        blockPt5 = str(format((bPt_6 - bPt_5), '.6f'))
+        blockPc5 = str(format((bPc_6 - bPc_5), '.6f'))
+        blockPt6 = str(format((bPt_7 - bPt_6), '.6f'))
+        blockPc6 = str(format((bPc_7 - bPc_6), '.6f'))
+        blockPt7 = str(format((bPt_8 - bPt_7), '.6f'))
+        blockPc7 = str(format((bPc_8 - bPc_7), '.6f'))
+        blockPt8 = str(format((bPt_9 - bPt_8), '.6f'))
+        blockPc8 = str(format((bPc_9 - bPc_8), '.6f'))
+        ptAll = float(blockPt1) + float(blockPt2) + float(blockPt3) + float(blockPt4) + float(blockPt5) + float(blockPt6) + float(blockPt7) + float(blockPt8)
+        pcAll = float(blockPc1) + float(blockPc2) + float(blockPc3) + float(blockPc4) + float(blockPc5) + float(blockPc6) + float(blockPc7) + float(blockPc8)
+        self.logEn.writerow([blockPc1, blockPc2, blockPc3, blockPc4, blockPc5, blockPc6, blockPc7, blockPc8, pcAll, totalPc, blockPt1, blockPt2, blockPt3, blockPt4, blockPt5, blockPt6, blockPt7, blockPt8, ptAll, totalPt]) #all
+
+        ###############################[YS]check
         return  np.array(state14),reward,self.ControlParameters.flag,self._get_info() #self.ControlParameters.state14
 
 
