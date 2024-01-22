@@ -43,10 +43,12 @@ class XplaneEnv(gym.Env):
 
         ###################################FILE
         self.logEn = None
-        logName1 = "Log_env"
+        logName1 = f"Log_env_{datetime.now()}.csv"
         try:
             log_en =open(logName1, 'w', newline='')
             self.logEn = csv.writer(log_en)
+            columns = ["blockPc1","blockPc2","blockPc3","blockPc4","blockPc5","blockPc6","blockPc7","blockPc8","pcAll","totalPc","blockPt1","blockPt2","blockPt3","blockPt4","blockPt5","blockPt6","blockPt7","blockPt8","ptAll","totalPt","isExcept"]
+            self.logEn.writerow(columns)
         except:
             print("################FAILED FILE OPEN################")
         ##################################
@@ -85,6 +87,7 @@ class XplaneEnv(gym.Env):
         ###############################[YS]check
         aPt_1 = process_time()
         aPc_1 = perf_counter()  
+        isExcept = False
         ###############################[YS]check
 
         self.test=False # if true, only test paramters returned. for Model tesing 
@@ -145,7 +148,7 @@ class XplaneEnv(gym.Env):
 
             #XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
             XplaneEnv.CLIENT.sendCTRL(actions) # send action
-            sleep(0.0003)  # sleep for a while so that action is executed
+            # sleep(0.0003)  # sleep for a while so that action is executed
             self.actions = actions  # set the previous action to current action. 
                                     # This will be compared to action on control in next iteraion
             #XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
@@ -337,6 +340,7 @@ class XplaneEnv(gym.Env):
 
         except Exception as e:
             print(f"#####################################EXCEPT, CRASH OR GROUND")
+            isExcept = True
             reward = self.ControlParameters.episodeReward
             self.ControlParameters.flag = False
             self.ControlParameters.state14 =  self.ControlParameters.state14
@@ -373,7 +377,7 @@ class XplaneEnv(gym.Env):
         blockPc8 = str(format((bPc_9 - bPc_8), '.6f'))
         ptAll = float(blockPt1) + float(blockPt2) + float(blockPt3) + float(blockPt4) + float(blockPt5) + float(blockPt6) + float(blockPt7) + float(blockPt8)
         pcAll = float(blockPc1) + float(blockPc2) + float(blockPc3) + float(blockPc4) + float(blockPc5) + float(blockPc6) + float(blockPc7) + float(blockPc8)
-        self.logEn.writerow([blockPc1, blockPc2, blockPc3, blockPc4, blockPc5, blockPc6, blockPc7, blockPc8, pcAll, totalPc, blockPt1, blockPt2, blockPt3, blockPt4, blockPt5, blockPt6, blockPt7, blockPt8, ptAll, totalPt]) #all
+        self.logEn.writerow([blockPc1, blockPc2, blockPc3, blockPc4, blockPc5, blockPc6, blockPc7, blockPc8, pcAll, totalPc, blockPt1, blockPt2, blockPt3, blockPt4, blockPt5, blockPt6, blockPt7, blockPt8, ptAll, totalPt, isExcept]) #all
 
         ###############################[YS]check
         return  np.array(state14),reward,self.ControlParameters.flag,self._get_info() #self.ControlParameters.state14
