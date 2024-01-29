@@ -20,7 +20,7 @@ def getParameters():
 
 		"stateVariable" : ["sim/flightmodel/position/local_vx","sim/flightmodel/position/local_vy",
 		"sim/flightmodel/position/local_vz"],
-		 
+		"rateVariable" : ["sim/flightmodel/position/P", "sim/flightmodel/position/Q", "sim/flightmodel/position/R"],
 		# "sim/cockpit2/autopilot/gpss_status"
 		"rewardVariable": "sim/cockpit2/radios/indicators/gps_dme_distance_nm", #,"sim/cockpit2/radios/indicators/gps_dme_time_min",
 

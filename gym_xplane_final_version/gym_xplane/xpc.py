@@ -284,28 +284,32 @@ class XPlaneConnect():
 			  drefs: A list of names of the datarefs to set.
 			  values: A list of scalar or vector values to set.
 		'''
-		if len(drefs) != len(values):
-			raise ValueError("drefs and values must have the same number of elements.")
+		try:
+			if len(drefs) != len(values):
+				raise ValueError("drefs and values must have the same number of elements.")
 
-		buffer = struct.pack(b"<4sx", b"DREF")
-		for i in range(len(drefs)):
-			dref = drefs[i]
-			value = values[i]
-			# Preconditions
-			if len(dref) == 0 or len(dref) > 255:
-				raise ValueError("dref must be a non-empty string less than 256 characters.")
-			if value == None:
-				raise ValueError("value must be a scalar or sequence of floats.")
-		
-			# Pack message
-			if hasattr(value, "__len__"):
-				if len(value) > 255:
-					raise ValueError("value must have less than 256 items.")
-				fmt = b"<B{0:d}sB{1:d}f".format(len(dref), len(value))
-				buffer += struct.pack(fmt, len(dref), dref, len(value), value)
-			else:
-				fmt = b"<B{0:d}sBf".format(len(dref))
-				buffer += struct.pack(fmt, len(dref), dref, 1, value)
+			buffer = struct.pack(b"<4sx", b"DREF")
+			for i in range(len(drefs)):
+				dref = drefs[i]
+				value = values[i]
+				# Preconditions
+				if len(dref) == 0 or len(dref) > 255:
+					raise ValueError("dref must be a non-empty string less than 256 characters.")
+				if value == None:
+					raise ValueError("value must be a scalar or sequence of floats.")
+			
+				# Pack message
+				if hasattr(value, "__len__"):
+					if len(value) > 255:
+						raise ValueError("value must have less than 256 items.")
+					ln = "<B{0:d}sB{1:d}f".format(len(dref), len(value))
+					# fmt = b"<B{0:d}sB{1:d}f".format(len(dref), len(value))
+					buffer += struct.pack(ln.encode(), len(dref), dref.encode(), len(value), value)
+				else:
+					fmt = "<B{0:d}sBf".format(len(dref))
+					buffer += struct.pack(fmt.encode(), len(dref), dref.encode(), 1, value)
+		except Exception as e:
+			print(e)
 
 		# Send
 		self.sendUDP(buffer)
