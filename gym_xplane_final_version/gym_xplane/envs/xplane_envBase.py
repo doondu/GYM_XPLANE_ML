@@ -48,7 +48,7 @@ class XplaneEnv(gym.Env):
         try:
             log_en =open(logName1, 'w', newline='')
             self.logEn = csv.writer(log_en)
-            columns = ["blockPc1","blockPc2","blockPc3","blockPc4","blockPc5","blockPc6","blockPc7","blockPc8","pcAll","blockPt1","blockPt2","blockPt3","blockPt4","blockPt5","blockPt6","blockPt7","blockPt8","ptAll","isExcept"]
+            columns = ["blockPc1","blockPc2","blockPc3","blockPc4","blockPc5","blockPc6","blockPc7","blockPc8","pcAll","blockPt1","blockPt2","blockPt3","blockPt4","blockPt5","blockPt6","blockPt7","blockPt8","ptAll","positionX","positionY","positionZ","isExcept"]
             self.logEn.writerow(columns)
         except:
             print("################FAILED FILE OPEN################")
@@ -86,8 +86,7 @@ class XplaneEnv(gym.Env):
 
     def step(self, actions):
         ###############################[YS]check
-        # aPt_1 = process_time()
-        # aPc_1 = perf_counter()  
+        #python3 ./gprof2dot/gprof2dot.py -f profile.pstats | dot -Tsvg -o callgraph.svg
         isExcept = False
         ###############################[YS]check
 
@@ -113,19 +112,19 @@ class XplaneEnv(gym.Env):
             
                 # velocityFirst = [[x] for x in velocityFirst]
                 # rateFirst = [[x] for x in rateFirst]
-                print(velocityFirst)
+                # print(velocityFirst)
                 XplaneEnv.CLIENT.sendPOSI(posiFirst)
                 XplaneEnv.CLIENT.sendDREFs(self.ControlParameters.stateVariable, velocityFirst)
                 XplaneEnv.CLIENT.sendDREFs(self.ControlParameters.rateVariable, rateFirst)
-                print("######################################SEND PARAMETER")
-                print(f"StateVariable Temp (vx, vy, vz): {velocityFirst} \n")
-                print(f"POSI (Latitude, Longitude, Altitude, Pitch, Roll, True Heading, Gear): {posiFirst} \n")
-                print(f"P Q R (Roll rate, Pitch rate, Yaw rate): {rateFirst} \n")
-                print("######################################SEND ALL PARAMETER")
+                # print("######################################SEND PARAMETER")
+                # print(f"StateVariable Temp (vx, vy, vz): {velocityFirst} \n")
+                # print(f"POSI (Latitude, Longitude, Altitude, Pitch, Roll, True Heading, Gear): {posiFirst} \n")
+                # print(f"P Q R (Roll rate, Pitch rate, Yaw rate): {rateFirst} \n")
+                # print("######################################SEND ALL PARAMETER")
                 self.isFirst = False
             except Exception as e:
                 print(e)
-                print("error##########################################")
+                print("Send error##########################################")
             return  np.array(state),reward,self.ControlParameters.flag,self._get_info()
 
         else: 
@@ -176,7 +175,7 @@ class XplaneEnv(gym.Env):
 
                 #XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
                 XplaneEnv.CLIENT.sendCTRL(actions) # send action
-                sleep(0.003)  #0.0003 sleep for a while so that action is executed
+                sleep(0.0003)  #0.0003 sleep for a while so that action is executed
                 self.actions = actions  # set the previous action to current action. 
                                         # This will be compared to action on control in next iteraion
                 #XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
@@ -216,9 +215,9 @@ class XplaneEnv(gym.Env):
                 # combine the position and other state parameters in temporary variable here
                 state =  self.ControlParameters.stateAircraftPosition + self.ControlParameters.stateVariableValue
 
-                ###############################[YS] Add print
-                #print(f"StateVariable Temp (vx, vy, vz): {stateVariableTemp} \n")
-                #print(f"POSI (Latitude, Longitude, Altitude, Pitch, Roll, True Heading, Gear): {self.ControlParameters.stateAircraftPosition} \n")
+                # ###############################[YS] Add print
+                # print(f"StateVariable Temp (vx, vy, vz): {stateVariableTemp} \n")
+                # print(f"POSI (Latitude, Longitude, Altitude, Pitch, Roll, True Heading, Gear): {self.ControlParameters.stateAircraftPosition} \n")
                 ###############################[YS] Add print
                 ########################################################
                 
@@ -253,7 +252,7 @@ class XplaneEnv(gym.Env):
                 hstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/hstab1_elv2def")[0][0] # horizontal stability : not use for now
                 vstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/vstab2_rud1def")[0][0] # vertical stability : not used for now
                 ###############################[YS] Add print
-                #print(f"P Q R (Roll rate, Pitch rate, Yaw rate): {P} {Q} {R} \n")
+                # print(f"P Q R (Roll rate, Pitch rate, Yaw rate): {P} {Q} {R} \n")
                 ###############################[YS] Add print
                 ###############################[YS]check
                 bPt_6 = process_time()
@@ -387,6 +386,11 @@ class XplaneEnv(gym.Env):
 
             # totalPt = str(format((aPt_2 - aPt_1), '.6f'))
             # totalPc = str(format((aPc_2 - aPc_1), '.6f'))
+            ############################################################################[YS] check
+            # a = XplaneEnv.CLIENT.getDREF("sim/flightmodel/engine/ENGN_FF_") #//Fuel flow (per engine) in kg/second ex)0.301923
+            # a = XplaneEnv.CLIENT.getDREF("sim/flightmodel/engine/ENGN_tacrad") #//Engine speed in radians/second ex)368.235213 
+            px, py, pz = self._get_position()
+
             blockPt1 = str(format((bPt_2 - bPt_1), '.6f')) #getCTRL
             blockPc1 = str(format((bPc_2 - bPc_1), '.6f'))
             blockPt2 = str(format((bPt_3 - bPt_2), '.6f')) #getCTRL
@@ -405,13 +409,18 @@ class XplaneEnv(gym.Env):
             blockPc8 = str(format((bPc_9 - bPc_8), '.6f'))
             ptAll = float(blockPt1) + float(blockPt2) + float(blockPt3) + float(blockPt4) + float(blockPt5) + float(blockPt6) + float(blockPt7) + float(blockPt8)
             pcAll = float(blockPc1) + float(blockPc2) + float(blockPc3) + float(blockPc4) + float(blockPc5) + float(blockPc6) + float(blockPc7) + float(blockPc8)
-            self.logEn.writerow([blockPc1, blockPc2, blockPc3, blockPc4, blockPc5, blockPc6, blockPc7, blockPc8, pcAll, blockPt1, blockPt2, blockPt3, blockPt4, blockPt5, blockPt6, blockPt7, blockPt8, ptAll, isExcept]) #all
+            self.logEn.writerow([blockPc1, blockPc2, blockPc3, blockPc4, blockPc5, blockPc6, blockPc7, blockPc8, pcAll, blockPt1, blockPt2, blockPt3, blockPt4, blockPt5, blockPt6, blockPt7, blockPt8, px, py, pz, ptAll, isExcept]) #all
             return  np.array(state14),reward,self.ControlParameters.flag,self._get_info() #self.ControlParameters.state14
-            ###############################[YS]check
+        # return 0
+        ###############################[YS]check
 
 
 
-   
+    def _get_position(self):
+        px = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/local_x")[0][0]
+        py = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/local_y")[0][0]
+        pz = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/local_z")[0][0]
+        return px, py, pz
 
   
 
