@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mv ~/GYM_XPLANE_ML/gym_xplane_final_version/*.csv ~/Desktop/Log/graph/log.csv
+mv ~/GYM_XPLANE_ML/gym_xplane_final_version/Log_*.csv ~/Desktop/Log/graph/log.csv
 echo "Choose type of graph"
 echo "--------------------------------"
 echo "process time and perf count -- 0"
