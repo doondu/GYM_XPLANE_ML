@@ -23,8 +23,10 @@ class XplaneEnv(gym.Env):
         XplaneEnv.CLIENT = None
         #print(parameters)
         envSpace = envSpaces.xplane_space()
-        
-        
+        ################################################LOG [YS]
+        self.rewardCount = 0
+        self.penalizeCount = 0
+        ################################################LOG [YS]
         self.ControlParameters = parameters.getParameters()
         self.action_space = envSpace._action_space()
         self.observation_space = envSpace._observation_space()
@@ -48,7 +50,7 @@ class XplaneEnv(gym.Env):
             log_en =open(logName1, 'w', newline='')
             self.logEn = csv.writer(log_en)
             # columns = ["blockPc1","blockPc2","blockPc3","blockPc4","blockPc5","blockPc6","blockPc7","blockPc8","pcAll","blockPt1","blockPt2","blockPt3","blockPt4","blockPt5","blockPt6","blockPt7","blockPt8","ptAll","Latitude","Longitude","Altitude","isExcept"]
-            columns = ["pcAll","Latitude","Longitude","Altitude","isExcept", "time"]
+            columns = ["rollRate", "pitchRate", "pitch", "roll", "velocityX", "velocityY", "velocityZ", "deltaAltitude", "deltaHeading", "yawRate","pcAll","Latitude","Longitude","Altitude","Heading","isReward","isPenalize", "time", "isExcept", "isTry"]
             self.logEn.writerow(columns)
         except:
             print("################FAILED FILE OPEN################")
@@ -88,7 +90,10 @@ class XplaneEnv(gym.Env):
         ###############################[YS]check
         #python3 -m cProfile -o profile.pstats logExample.py
         #gprof2dot -f pstats profile.pstats | dot -Tsvg -o callgraph.svg
+        isReward = False
+        isPenalize = False
         isExcept = False
+        isTry = False
         ###############################[YS]check
 
         self.test=False # if true, only test paramters returned. for Model tesing 
@@ -123,7 +128,7 @@ class XplaneEnv(gym.Env):
 
         else: 
             try:
-
+                isTry = True
                 ###############################[YS]check
                 pcStart = perf_counter()
                 ###############################[YS]check
@@ -163,7 +168,7 @@ class XplaneEnv(gym.Env):
 
                 #XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
                 XplaneEnv.CLIENT.sendCTRL(actions) # send action
-                sleep(3)  #0.0003 sleep for a while so that action is executed
+                sleep(0.03)  #0.0003 sleep for a while so that action is executed
                 self.actions = actions  # set the previous action to current action. 
                                         # This will be compared to action on control in next iteraion
                 #XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
@@ -193,9 +198,14 @@ class XplaneEnv(gym.Env):
                 stateVariableTemp = XplaneEnv.CLIENT.getDREFs(self.ControlParameters.stateVariable)
                 # the client interface automaically gets the position paameters
                 self.ControlParameters.stateAircraftPosition = list(XplaneEnv.CLIENT.getPOSI());
+                # print("POSI")
+                # print(self.ControlParameters.stateAircraftPosition)
                 # Remove brackets from state variable and store in the dictionary
                 self.ControlParameters.stateVariableValue = [i[0] for i in stateVariableTemp]
+                # print("velocity")
+                # print(self.ControlParameters.stateVariableValue)
                 # combine the position and other state parameters in temporary variable here
+                #########################[YS]
                 state =  self.ControlParameters.stateAircraftPosition + self.ControlParameters.stateVariableValue
 
                 # ###############################[YS] Add print
@@ -210,8 +220,8 @@ class XplaneEnv(gym.Env):
                 # this is set to motivate he agent to mov forad in time . Accumulate disance
                 # 여기가 state get 값 모음2
                 rewardVector = XplaneEnv.CLIENT.getDREF(self.ControlParameters.rewardVariable)[0][0] 
-                headingReward = 164 # the heading target
-                minimumAltitude= 12000 # Targrt Altitude
+                headingReward = 4 # the heading target, 164
+                minimumAltitude= 1031 # Targrt Altitude, 12000
                 minimumRuntime = 210.50 # Target runtime
                 # ****************************************************************************************
 
@@ -221,9 +231,9 @@ class XplaneEnv(gym.Env):
                 P = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/P")[0][0] # moment P
                 Q = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/Q")[0][0] # moment Q
                 R = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/R")[0][0]  # moment R
-
-                hstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/hstab1_elv2def")[0][0] # horizontal stability : not use for now
-                vstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/vstab2_rud1def")[0][0] # vertical stability : not used for now
+                # print(f"P: {P} Q: {Q} R: {R}")
+                # hstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/hstab1_elv2def")[0][0] # horizontal stability : not use for now
+                # vstab = XplaneEnv.CLIENT.getDREF("sim/flightmodel/controls/vstab2_rud1def")[0][0] # vertical stability : not used for now
                 ###############################[YS] Add print
                 # print(f"P Q R (Roll rate, Pitch rate, Yaw rate): {P} {Q} {R} \n")
                 ###############################[YS] Add print
@@ -243,9 +253,10 @@ class XplaneEnv(gym.Env):
                     self.ControlParameters.state14['altitude']= state[2] #  Altitude 
                     self.ControlParameters.state14['Pitch']= state[3] # pitch 
                     self.ControlParameters.state14['Roll']= state[4]  # roll
-                    self.ControlParameters.state14['velocity_x']= state[6] # local velocity x  OpenGL coordinates
-                    self.ControlParameters.state14['velocity_y']= state[7] # local velocity y  OpenGL coordinates              
-                    self.ControlParameters.state14['velocity_z']= state[8] # local velocity z   OpenGL coordinates
+                    ################################################[YS], three value which under this code, change the index
+                    self.ControlParameters.state14['velocity_x']= state[7] # local velocity x  OpenGL coordinates
+                    self.ControlParameters.state14['velocity_y']= state[8] # local velocity y  OpenGL coordinates              
+                    self.ControlParameters.state14['velocity_z']= state[9] # local velocity z   OpenGL coordinates
                     self.ControlParameters.state14['delta_altitude']= abs(state[2] - minimumAltitude) # difference in altitude
                     self.ControlParameters.state14['delta_heading']= abs(state[5] - headingReward) # difference in heading
                     self.ControlParameters.state14['yaw_rate']= R # The yaw rotation rates (relative to the flight)
@@ -264,14 +275,19 @@ class XplaneEnv(gym.Env):
                 # *******************************reward computation ******************
                 # parameters required for reward
                 # time is not used here
-                timer =  XplaneEnv.CLIENT.getDREF(self.ControlParameters.timer2)[0][0] # running time of simulation
+
+                # timer =  XplaneEnv.CLIENT.getDREF(self.ControlParameters.timer2)[0][0] # running time of simulation
                 target_state = [abs(headingReward),minimumAltitude,0.25]  # taget situation -heading, altitude, and distance 
                 xplane_state = [ abs(state[5]),state[2],rewardVector]  # present situation -heading, altitude, and distance 
                 # if the heading and altitude are within small pertubation set good reward othewise penalize it.
-                if  (abs( abs(state[5])-headingReward)) < perturbationAllowed[0] and (state[2]-minimumAltitude) < perturbationAllowed[1]:
+                if  (abs( abs(state[5])-headingReward)) < perturbationAllowed[0] and abs(state[2]-minimumAltitude) < perturbationAllowed[1]:
+                    self.rewardCount = self.rewardCount + 1
+                    isReward = True
                     reward = self.rewardCalcul(target_state,xplane_state,sigma=0.85)[0]
                     self.ControlParameters.episodeReward = reward
                 else:
+                    self.penalizeCount = self.penalizeCount + 1
+                    isPenalize = True
                     reward = self.rewardCalcul(target_state,xplane_state)
                     self.ControlParameters.episodeReward = -reward[0]
                 self.ControlParameters.episodeStep += 1
@@ -324,8 +340,9 @@ class XplaneEnv(gym.Env):
                 ###############################[YS]check
 
             except Exception as e:
-                print(f"#####################################EXCEPT, CRASH OR GROUND")
                 isExcept = True
+                print(f"#####################################EXCEPT, CRASH OR GROUND")
+                print(f"reward count: {self.rewardCount}    penalize count: {self.penalizeCount}")
                 reward = self.ControlParameters.episodeReward
                 self.ControlParameters.flag = False
                 self.ControlParameters.state14 =  self.ControlParameters.state14
@@ -334,32 +351,12 @@ class XplaneEnv(gym.Env):
                     state14 = state
                 else:
                     state14 = [i for i in self.ControlParameters.state14.values()]
-            #print(reward, 'reward' , self.ControlParameters.totalReward, self.ControlParameters.episodeReward )
-            q = process_time() # end of loop timer 
-            #print("pause estimate", q-j)
-            ###############################[YS]check
-            # aPt_2 = process_time()
-            # aPc_2 = perf_counter()
-
-            # totalPt = str(format((aPt_2 - aPt_1), '.6f'))
-            # totalPc = str(format((aPc_2 - aPc_1), '.6f'))
-            ############################################################################[YS] check
-            # a = XplaneEnv.CLIENT.getDREF("sim/flightmodel/engine/ENGN_FF_") #//Fuel flow (per engine) in kg/second ex)0.301923
-            # a = XplaneEnv.CLIENT.getDREF("sim/flightmodel/engine/ENGN_tacrad") #//Engine speed in radians/second ex)368.235213 
-            self.logEn.writerow([pcAll, self.ControlParameters.stateAircraftPosition[0], self.ControlParameters.stateAircraftPosition[1], self.ControlParameters.stateAircraftPosition[2],isExcept, time_ns()]) #all
+     
+            self.logEn.writerow([self.ControlParameters.state14['roll_rate'],self.ControlParameters.state14['pitch_rate'],self.ControlParameters.state14['Pitch'],self.ControlParameters.state14['Roll'],self.ControlParameters.state14['velocity_x'],self.ControlParameters.state14['velocity_y'],self.ControlParameters.state14['velocity_z'],self.ControlParameters.state14['delta_altitude'],self.ControlParameters.state14['delta_heading'],self.ControlParameters.state14['yaw_rate'],pcAll, self.ControlParameters.stateAircraftPosition[0], self.ControlParameters.stateAircraftPosition[1], self.ControlParameters.stateAircraftPosition[2],state[5],isReward, isPenalize, time(), isExcept, isTry]) #all
             return  np.array(state14),reward,self.ControlParameters.flag,self._get_info() #self.ControlParameters.state14
             # return 0
             ###############################[YS]check
 
-
-
-    def _get_position(self):
-        px = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/local_x")[0][0]
-        py = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/local_y")[0][0]
-        pz = XplaneEnv.CLIENT.getDREF("sim/flightmodel/position/local_z")[0][0]
-        return px, py, pz
-
-  
 
     def _get_info(self):
         """Returns a dictionary contains debug info"""

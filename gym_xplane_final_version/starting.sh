@@ -13,15 +13,15 @@ VAL3=3
 echo "number: "
 read NAME
 if [ ${NUM} -eq ${VAL0} ]; then
-        mv Log*.csv /home/ys/Desktop/Log/3/base/base${NAME}.csv
-	mv call*.svg /home/ys/Desktop/Log/3/base/call${NAME}.svg
+        mv Log*.csv /home/ys/Desktop/Log/4/base/base${NAME}.csv
+	mv call*.svg /home/ys/Desktop/Log/4/base/call${NAME}.svg
 elif [ ${NUM} -eq ${VAL1} ]; then
-	mv Log*.csv /home/ys/Desktop/Log/3/long/long${NAME}.csv
-	mv call*.svg /home/ys/Desktop/Log/3/long/call${NAME}.svg
+	mv Log*.csv /home/ys/Desktop/Log/4/long/long${NAME}.csv
+	mv call*.svg /home/ys/Desktop/Log/4/long/call${NAME}.svg
 elif [ ${NUM} -eq ${VAL2} ]; then
-	mv Log*.csv /home/ys/Desktop/Log/3/none/none${NAME}.csv
-	mv call*.svg /home/ys/Desktop/Log/3/none/call${NAME}.svg
+	mv Log*.csv /home/ys/Desktop/Log/4/none/none${NAME}.csv
+	mv call*.svg /home/ys/Desktop/Log/4/none/call${NAME}.svg
 else
-	mv Log*.csv /home/ys/Desktop/Log/3/slong/slong${NAME}.csv
-        mv call*.svg /home/ys/Desktop/Log/3/slong/call${NAME}.svg
+	mv Log*.csv /home/ys/Desktop/Log/4/slong/slong${NAME}.csv
+        mv call*.svg /home/ys/Desktop/Log/4/slong/call${NAME}.svg
 fi

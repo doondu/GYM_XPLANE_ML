@@ -41,23 +41,6 @@ if __name__ == '__main__':
     
 
     episodes = 0
-    ##################################[YS]FILE
-    # logName1 = "Log_step_" + str(datetime.now())
-    # logName2 = "Log_epi_" + str(datetime.now())
-
-    # logSt = 0
-    # logEp = 0
-    # rewardLast = 0
-    # try:
-    #     log_st = open(logName1, 'w', newline='')
-    #     log_ep = open(logName2, 'w', newline='')
-    #     logSt = csv.writer(log_st)
-    #     logEp = csv.writer(log_ep)
-    # except:
-    #     print("################FAILED FILE OPEN################")
-    ##################################[YS]FILE
-
-
 
 
     while episodes < 50:
@@ -78,7 +61,7 @@ if __name__ == '__main__':
             #RL logic
             action = agent.act()
             obs, reward, done, _ = env.step(action) 
-            print(obs, reward, done)
+            # print(obs, reward, done)
 
             ########################################[YS]LOGFILE, 
             # string1 = str(format((process_time() - ssStart), '.6f')) #processtime
@@ -90,7 +73,6 @@ if __name__ == '__main__':
             #########################################[YS]LOGFILE
             rewardLast = reward
             print(f"########################{episodes}")
-
         episodes += 1
         ########################################[YS]LOGFILE
         # string5 = str(format((process_time() - essStart), '.6f'))#processtime
