@@ -37,6 +37,9 @@ class XplaneEnv(gym.Env):
         self.actions = [0,0,0,0]
         self.test=test
         self.isFirst = True
+        #####################################[YS]
+        self.check = 0
+        #####################################[YS]
         try:
             XplaneEnv.CLIENT = initial.connect(clientAddr,xpHost,xpPort,clientPort,timeout ,max_episode_steps)
         except:
@@ -50,7 +53,7 @@ class XplaneEnv(gym.Env):
             log_en =open(logName1, 'w', newline='')
             self.logEn = csv.writer(log_en)
             # columns = ["blockPc1","blockPc2","blockPc3","blockPc4","blockPc5","blockPc6","blockPc7","blockPc8","pcAll","blockPt1","blockPt2","blockPt3","blockPt4","blockPt5","blockPt6","blockPt7","blockPt8","ptAll","Latitude","Longitude","Altitude","isExcept"]
-            columns = ["rollRate", "pitchRate", "pitch", "roll", "velocityX", "velocityY", "velocityZ", "deltaAltitude", "deltaHeading", "yawRate","pcAll","Latitude","Longitude","Altitude","Heading","isReward","isPenalize", "time", "isExcept", "isTry"]
+            columns = ["rollRate", "pitchRate", "pitch", "roll", "velocityX", "velocityY", "velocityZ", "deltaAltitude", "deltaHeading", "yawRate","pcAll","Latitude","Longitude","Altitude","Heading","isReward","isPenalize", "time", "isExcept", "isTry", "Reward"]
             self.logEn.writerow(columns)
         except:
             print("################FAILED FILE OPEN################")
@@ -166,12 +169,12 @@ class XplaneEnv(gym.Env):
                 # rfStart = perf_counter()
                 #################[YS] LOGFILE
 
-                #XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
+                # XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
                 XplaneEnv.CLIENT.sendCTRL(actions) # send action
-                sleep(0.03)  #0.0003 sleep for a while so that action is executed
+                sleep(0.3)  #0.0003 sleep for a while so that action is executed
                 self.actions = actions  # set the previous action to current action. 
                                         # This will be compared to action on control in next iteraion
-                #XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
+                # XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft
                 j=process_time() # get the time now, i-j is the time at which the simulation is unpaused and action exeuted
 
                 #################[YS] LOGFILE
@@ -221,7 +224,7 @@ class XplaneEnv(gym.Env):
                 # 여기가 state get 값 모음2
                 rewardVector = XplaneEnv.CLIENT.getDREF(self.ControlParameters.rewardVariable)[0][0] 
                 headingReward = 4 # the heading target, 164
-                minimumAltitude= 1031 # Targrt Altitude, 12000
+                minimumAltitude= 1031 # Targrt Altitude, 1031
                 minimumRuntime = 210.50 # Target runtime
                 # ****************************************************************************************
 
@@ -260,6 +263,7 @@ class XplaneEnv(gym.Env):
                     self.ControlParameters.state14['delta_altitude']= abs(state[2] - minimumAltitude) # difference in altitude
                     self.ControlParameters.state14['delta_heading']= abs(state[5] - headingReward) # difference in heading
                     self.ControlParameters.state14['yaw_rate']= R # The yaw rotation rates (relative to the flight)
+                    
                     if self.test :
                         # if testing use append longitude and latitude as  the state variable
                         # The intuition for this is that during testing we need lat and long to be able to project the position of the
@@ -312,6 +316,7 @@ class XplaneEnv(gym.Env):
                         #self.ControlParameters.totalReward -= 1
                     else: 
                         pass
+                    
                 # set flag to true if maximum steps has been achieved. Thus episode is finished.
                 # set the maximum episode step to the value you want    
                 elif self.ControlParameters.episodeStep > self.max_episode_steps:
@@ -340,6 +345,7 @@ class XplaneEnv(gym.Env):
                 ###############################[YS]check
 
             except Exception as e:
+                print("EXCEPTION\n", e)
                 isExcept = True
                 print(f"#####################################EXCEPT, CRASH OR GROUND")
                 print(f"reward count: {self.rewardCount}    penalize count: {self.penalizeCount}")
@@ -351,8 +357,8 @@ class XplaneEnv(gym.Env):
                     state14 = state
                 else:
                     state14 = [i for i in self.ControlParameters.state14.values()]
-     
-            self.logEn.writerow([self.ControlParameters.state14['roll_rate'],self.ControlParameters.state14['pitch_rate'],self.ControlParameters.state14['Pitch'],self.ControlParameters.state14['Roll'],self.ControlParameters.state14['velocity_x'],self.ControlParameters.state14['velocity_y'],self.ControlParameters.state14['velocity_z'],self.ControlParameters.state14['delta_altitude'],self.ControlParameters.state14['delta_heading'],self.ControlParameters.state14['yaw_rate'],pcAll, self.ControlParameters.stateAircraftPosition[0], self.ControlParameters.stateAircraftPosition[1], self.ControlParameters.stateAircraftPosition[2],state[5],isReward, isPenalize, time(), isExcept, isTry]) #all
+            
+            self.logEn.writerow([self.ControlParameters.state14['roll_rate'],self.ControlParameters.state14['pitch_rate'],self.ControlParameters.state14['Pitch'],self.ControlParameters.state14['Roll'],self.ControlParameters.state14['velocity_x'],self.ControlParameters.state14['velocity_y'],self.ControlParameters.state14['velocity_z'],self.ControlParameters.state14['delta_altitude'],self.ControlParameters.state14['delta_heading'],self.ControlParameters.state14['yaw_rate'],pcAll, self.ControlParameters.stateAircraftPosition[0], self.ControlParameters.stateAircraftPosition[1], self.ControlParameters.stateAircraftPosition[2],state[5],isReward, isPenalize, time(), isExcept, isTry, reward]) #all
             return  np.array(state14),reward,self.ControlParameters.flag,self._get_info() #self.ControlParameters.state14
             # return 0
             ###############################[YS]check

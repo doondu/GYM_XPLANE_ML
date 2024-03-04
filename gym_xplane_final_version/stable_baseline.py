@@ -50,6 +50,3 @@ if __name__ == '__main__':
     model = PPO2(MlpPolicy, env, verbose=1)
     model.learn(total_timesteps=1000000)
     #PPO2('MlpPolicy', env, verbose=1).learn(1000)
-   
-
-

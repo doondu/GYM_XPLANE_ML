@@ -5,8 +5,6 @@ import gym_xplane
 import gym
 from datetime import datetime
 from time import sleep, process_time, perf_counter, thread_time, time
-import threading
-
 
 class RandomAgent(object):
     def __init__(self, action_space):
@@ -34,9 +32,8 @@ if __name__ == '__main__':
     env.xpHost = args.xpHost
     env.xpPort = args.xpPort
     env.clientPort = args.xpPort
-    
-
     #env.seed(123)
+    # agent = RandomAgent(env.action_space())
     agent = RandomAgent(env.action_space)
     
 
@@ -80,6 +77,4 @@ if __name__ == '__main__':
         # logEp.writerow([str(erfStart), string5, string6])
         ########################################[YS]LOGFILE
     
-    # logSt.close()
-    # logEp.close()
     env.close()

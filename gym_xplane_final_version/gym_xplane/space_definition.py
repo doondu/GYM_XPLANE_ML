@@ -22,11 +22,16 @@ class xplane_space():
     def _observation_space(self):
         
         '''
-        return spaces.Dict({"Latitude":  spaces.Box(low=0, high=360, shape=()),
-            "Longitude":  spaces.Box(low=0, high=360, shape=()),
-            "Altitude":  spaces.Box(low=0, high=8500, shape=()),"Pitch":  spaces.Box(low=-290, high=290, shape=()),"Roll":  spaces.Box(low=-100, high=100, shape=()),"Heading":  spaces.Box(low=0, high=360, shape=()),"gear":  spaces.Discrete(2),"yoke_pitch_ratio":  spaces.Box(low=-2.5, high=2.5, shape=()),"yoke_roll_ratio":  spaces.Box(low=-300, high=300, shape=()),"yoke_heading_ratio":  spaces.Box(low=-180, high=180,shape=()),"alpha":  spaces.Box(low=-100, high=100,shape=()),
+        return spaces.Dict({1"Latitude":  spaces.Box(low=0, high=360, shape=()),
+            2"Longitude":  spaces.Box(low=0, high=360, shape=()),
+            3"Altitude":  spaces.Box(low=0, high=8500, shape=()),4"Pitch":  spaces.Box(low=-290, high=290, shape=()),5"Roll":  spaces.Box(low=-100, high=100, shape=()),6"Heading":  spaces.Box(low=0, high=360, shape=()),7"gear":  spaces.Discrete(2),8"yoke_pitch_ratio":  spaces.Box(low=-2.5, high=2.5, shape=()),9"yoke_roll_ratio":  spaces.Box(low=-300, high=300, shape=()),10"yoke_heading_ratio":  spaces.Box(low=-180, high=180,shape=()),11"alpha":  spaces.Box(low=-100, high=100,shape=()),
             "wing_sweep_ratio":  spaces.Box(low=-100, high=100, shape=()),"flap_ratio":  spaces.Box(low=-100, high=100, shape=()),
-            "speed": spaces.Box(low=-2205, high=2205, shape=())})
+            12"speed": spaces.Box(low=-2205, high=2205, shape=())})
+            
+            state14
+            (1 rollrate, 2 pitch rate, 3 altitude, 4 pitch, 5 roll, 6 velocity_x, 7 velocity_y, 8 velocity_z, 9 delta altitude, 10 delta heading, 11 yaw rate)
         '''
-        return spaces.Box(np.array([ -360, -360, 0 ,-290,-100,-360,-360,-1000,-1300,-1000,-1000]),np.array([360,360,8500,290,100,360,360,1000,1300,1000,1000]))
+        # return spaces.Box(np.array([ -360, -360, 0 ,-290,-100,-360,-360,-1000,-1300,-1000,-1000]),np.array([360,360,8500,290,100,360,360,1000,1300,1000,1000]))
+        return spaces.Box(np.array([ -180, -180, 0 ,-180,-180,-180,-180,-180,0,-360,-180]),np.array([180,180,2000,180,180,180,180,180,2000,360,180]))
+
       
