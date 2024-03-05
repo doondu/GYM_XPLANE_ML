@@ -105,7 +105,8 @@ class XplaneEnv(gym.Env):
         #self.ControlParameters.totalReward = 0 # reward for final episode aimed at penalizing crash if it crashes finally 
         
         reward = 0.
-        perturbationAllowed = [3.5,15] # pertubation allowed on altitude and heading
+        perturbationAllowed = [3.5,15]
+
         actions_ = []
         
         j=0  # getting simulaion timing measurement
@@ -171,7 +172,7 @@ class XplaneEnv(gym.Env):
 
                 # XplaneEnv.CLIENT.pauseSim(False) # unpause x plane simulation
                 XplaneEnv.CLIENT.sendCTRL(actions) # send action
-                sleep(0.3)  #0.0003 sleep for a while so that action is executed
+                sleep(0.0003)  #0.0003 sleep for a while so that action is executed
                 self.actions = actions  # set the previous action to current action. 
                                         # This will be compared to action on control in next iteraion
                 # XplaneEnv.CLIENT.pauseSim(True) # pause simulation so that no other action acts on he aircaft

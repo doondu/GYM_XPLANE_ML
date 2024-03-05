@@ -30,6 +30,8 @@ env.reset()
 ###########################################[YS] 일정한 데이터를 사용하기 위해 random seed 추가
 env.observation_space.np_random.seed(123)
 ###########################################[YS]
+
+
 # observation_space.sample()을 호출하여 환경에서 관측할 수 있는 상태의 예제를 10,000개 생성
 observation_examples = np.array([env.observation_space.sample() for x in range(10000)])
 print(observation_examples[1])
@@ -97,16 +99,16 @@ class Policy():
             #정규 분포 객체를 생성
 
 			dist = tf.distributions.Normal(loc=mu,scale=self.sigma)
-
+			
             # 정책 신경망에서 얻은 정책의 확률 분포로부터 행동을 샘플링
             # dist에서 샘플을 추출하는 작업, 이 코드를 반복하여 실행하면 매번 다른 값이 출력
 			act_1 =  tf.clip_by_value(dist.sample(1), env.action_space.low[0], env.action_space.high[0])
 			act_2 =  tf.clip_by_value(dist.sample(1), env.action_space.low[1], env.action_space.high[1])
 			act_3 =  tf.clip_by_value(dist.sample(1), env.action_space.low[2], env.action_space.high[2])
 			act_4 =  tf.clip_by_value(dist.sample(1), env.action_space.low[3], env.action_space.high[3])
+	
             #각 차원의 행동을 하나의 텐서
 			self.action = tf.concat([act_1,act_2,act_3,act_4],0)
-
 
 			# 로그 확률에 타겟 placeholder을 곱하여 손실을 계산, 보상 또는 어드밴티지 등과 같은 값
             # 위에서 계산한 두 항목을 모두 더한 후 음수로 바꾸어 손실 함수를 계산
@@ -136,6 +138,7 @@ class Policy():
 	
 	def get_action(self,sess,state):
 		state = featurize_state(state)
+
         # 계산된 action 반환
 		return sess.run(self.action,feed_dict={self.state_placeholder:state})
 	
@@ -227,11 +230,14 @@ def actor_critic(num_episodes,learning_rate_critic,learning_rate_actor,entropy_s
 
 			s_state, s_action, s_reward, s_next_state, s_done = [state,action,reward,next_state,done]
 
-            # SARSA logic, GAMMA is discount factor
+            # 원하는 결과인 정답
 			critic_target = s_reward + GAMMA * critic.predict_value(sess,s_next_state)
+			# 정답 - 예측 MSE
 			td_error = critic_target - critic.predict_value(sess,s_state)
 
+			
 			critic_loss = critic.update(sess,s_state,critic_target)
+			# td_error를 가지고 Q함수를 지속적으로 업데이트 시킨다
 			actor_loss = actor.update(sess,s_state,td_error,s_action)
 				
 			#action_value_summary = tf.Summary(value=[tf.Summary.Value(tag='Action Value',simple_value=action)])
